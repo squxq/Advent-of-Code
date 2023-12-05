@@ -1,0 +1,8 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "Eslint && Prettier"
+yarn lint && yarn prettier
+
+echo "Current Branch"
+git branch --show-current
