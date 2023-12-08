@@ -1,35 +1,48 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import * as fs from "fs";
 
+interface maxCounts {
+  red: number;
+  green: number;
+  blue: number;
+  [key: string]: number;
+}
+
+export interface getMaxCountsReturn {
+  maxCounts: maxCounts;
+  gameId: number;
+}
+
+export function getMaxCounts(line: string): getMaxCountsReturn {
+  const maxCounts: maxCounts = {
+    red: 0,
+    green: 0,
+    blue: 0,
+  };
+
+  const [gameId, subsetsString] = line.split(":");
+  const subsets: string[] = subsetsString!.split(";");
+  for (const set of subsets) {
+    const cubes: string[] = set.split(",");
+    for (let cube of cubes) {
+      cube = cube.trim();
+      const [num, color] = cube.split(" ");
+      maxCounts[color!] = Math.max(maxCounts[color!]!, +num!);
+    }
+  }
+
+  return { maxCounts, gameId: +gameId!.slice(5) };
+}
+
 export function part1(input: string): number {
   let ans: number = 0;
   const lines: string[] = input.trim().split("\n");
 
   for (const line of lines) {
-    const maxCounts: {
-      red: number;
-      green: number;
-      blue: number;
-      [key: string]: number;
-    } = {
-      red: 0,
-      green: 0,
-      blue: 0,
-    };
-
-    const [gameId, subsetsString] = line.split(":");
-    const subsets: string[] = subsetsString!.split(";");
-    for (const set of subsets) {
-      const cubes: string[] = set.split(",");
-      for (let cube of cubes) {
-        cube = cube.trim();
-        const [num, color] = cube.split(" ");
-        maxCounts[color!] = Math.max(maxCounts[color!]!, +num!);
-      }
-    }
+    const { maxCounts, gameId } = getMaxCounts(line);
 
     if (maxCounts.red <= 12 && maxCounts.green <= 13 && maxCounts.blue <= 14) {
-      ans += +gameId!.slice(5);
+      ans += gameId;
     }
   }
 
@@ -37,8 +50,16 @@ export function part1(input: string): number {
 }
 
 export function part2(input: string): number {
-  // code
-  return 0;
+  let power: number = 0;
+  const lines: string[] = input.trim().split("\n");
+
+  for (const line of lines) {
+    const { maxCounts } = getMaxCounts(line);
+
+    power += maxCounts.red * maxCounts.green * maxCounts.blue;
+  }
+
+  return power;
 }
 
 function run(): void {
