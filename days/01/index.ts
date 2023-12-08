@@ -1,4 +1,4 @@
-import { exec } from "child_process";
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import * as fs from "fs";
 
 export function part1(input: string): number {
@@ -6,11 +6,9 @@ export function part1(input: string): number {
   const lines: string[] = input.trim().split("\n");
 
   for (const line of lines) {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const firstDigit: string = line
       .split("")
       .find((char) => /^\d$/.test(char))!;
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const lastDigit: string = line
       .split("")
       .reverse()
@@ -21,42 +19,73 @@ export function part1(input: string): number {
   return ans;
 }
 
-async function run(): Promise<void> {
-  await new Promise<void>((resolve, reject) => {
-    const childProcess = exec("jest", (error, stdout) => {
-      if (error !== null) {
-        reject(error);
-      } else {
-        console.log(stdout);
-        resolve();
-      }
-    });
+export function part2(input: string): number {
+  let ans: number = 0;
+  const lines: string[] = input.trim().split("\n");
+  const numberWords: Record<string, string> = {
+    one: "1",
+    two: "2",
+    three: "3",
+    four: "4",
+    five: "5",
+    six: "6",
+    seven: "7",
+    eight: "8",
+    nine: "9",
+  };
 
-    childProcess.on("error", (error) => {
-      reject(error);
-    });
+  const forwardPattern =
+    /(\d)|(one)|(two)|(three)|(four)|(five)|(six)|(seven)|(eight)|(nine)/;
+  const backwardPattern =
+    /(\d)|(eno)|(owt)|(eerht)|(ruof)|(evif)|(xis)|(neves)|(thgie)|(enin)/;
 
-    const inputContent: string = fs.readFileSync(
-      "./days/01/input.txt",
-      "utf-8",
+  for (const line of lines) {
+    const firstDigit: string = forwardPattern.exec(line)![0];
+    const lastDigit: string = backwardPattern
+      .exec(line.split("").reverse().join(""))![0]
+      .split("")
+      .reverse()
+      .join("");
+
+    ans += Number(
+      (firstDigit.length > 1 ? numberWords[firstDigit] : firstDigit)! +
+        (lastDigit.length > 1 ? numberWords[lastDigit] : lastDigit)!,
     );
+  }
 
-    const startTime = process.hrtime();
-    const result: number = part1(inputContent);
-    const endTime = process.hrtime();
-
-    const elapsedTime =
-      endTime[0] * 1e9 + endTime[1] - (startTime[0] * 1e9 + startTime[1]);
-
-    console.log(`"part1" Execution Time: ${elapsedTime / 1e6} milisseconds.`);
-    console.log(`"part1" Result: ${result}`);
-  });
+  return ans;
 }
 
-run()
-  .then(() => {
-    process.exit();
-  })
-  .catch((error) => {
-    throw error;
-  });
+function run(): void {
+  const inputContent: string = fs.readFileSync("./days/01/input.txt", "utf-8");
+
+  const startTimePart1 = process.hrtime();
+  const resultPart1: number = part1(inputContent);
+  const endTimePart1 = process.hrtime();
+
+  const elapsedTimePart1 =
+    endTimePart1[0] * 1e9 +
+    endTimePart1[1] -
+    (startTimePart1[0] * 1e9 + startTimePart1[1]);
+
+  console.log(
+    `"part1" Execution Time: ${elapsedTimePart1 / 1e6} milisseconds.`,
+  );
+  console.log(`"part1" Result: ${resultPart1}`);
+
+  const startTimePart2 = process.hrtime();
+  const resultPart2: number = part2(inputContent);
+  const endTimePart2 = process.hrtime();
+
+  const elapsedTimePart2 =
+    endTimePart2[0] * 1e9 +
+    endTimePart2[1] -
+    (startTimePart2[0] * 1e9 + startTimePart2[1]);
+
+  console.log(
+    `"part2" Execution Time: ${elapsedTimePart2 / 1e6} milisseconds.`,
+  );
+  console.log(`"part2" Result: ${resultPart2}`);
+}
+
+run();
