@@ -30,6 +30,25 @@ function adjacentSymbol(
   return false;
 }
 
+function adjacentStar(
+  start: number,
+  end: number,
+  row: number,
+  matrix: string[][],
+): Array<{ col: number; row: number }> {
+  const result: Array<{ col: number; row: number }> = [];
+
+  matrix[row]![start - 1] === "*" && result.push({ col: start - 1, row });
+  matrix[row]![end + 1] === "*" && result.push({ col: end + 1, row });
+
+  for (let col: number = start - 1; col <= end + 1; col++) {
+    matrix[row - 1]?.[col] === "*" && result.push({ col, row: row - 1 });
+    matrix[row + 1]?.[col] === "*" && result.push({ col, row: row + 1 });
+  }
+
+  return result;
+}
+
 export function part1(input: string): number {
   let ans: number = 0;
 
@@ -66,8 +85,60 @@ export function part1(input: string): number {
 }
 
 export function part2(input: string): number {
-  // code here
-  return 0;
+  const adjacentStars: Record<string, number[]> = {};
+
+  const matrix: string[][] = input
+    .trim()
+    .split("\n")
+    .map((line) => line.split(""));
+  const height: number = matrix.length;
+  const width: number = matrix[0]!.length;
+
+  for (let row: number = 0; row < height; row++) {
+    let partNumber: string = "";
+    let start: number = 0;
+
+    for (let col: number = 0; col <= width; col++) {
+      const char: string = col !== width ? matrix[row]![col]! : ".";
+
+      if (/^\d$/.test(char)) {
+        if (partNumber.length === 0) {
+          start = col;
+        }
+        partNumber += char;
+      } else if (partNumber.length > 0) {
+        const stars: Array<{ col: number; row: number }> = adjacentStar(
+          start,
+          col - 1,
+          row,
+          matrix,
+        );
+
+        stars.forEach(({ col, row }: { col: number; row: number }) => {
+          const key: string = `${col},${row}`;
+
+          if (adjacentStars[key] !== undefined) {
+            adjacentStars[key]!.push(Number(partNumber));
+          } else {
+            adjacentStars[key] = [Number(partNumber)];
+          }
+        });
+
+        partNumber = "";
+        start = 0;
+      }
+    }
+  }
+
+  return Object.entries(adjacentStars).reduce(
+    (acc: number, [, value]: [string, number[]]) => {
+      if (value.length === 2) {
+        return acc + value[0]! * value[1]!;
+      }
+      return acc;
+    },
+    0,
+  );
 }
 
 function run(): void {
