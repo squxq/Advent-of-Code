@@ -44,15 +44,17 @@ export function part1(input: string): number {
     let partNumber: string = "";
     let start: number = 0;
 
-    for (let col: number = 0; col < width; col++) {
-      if (/^\d$/.test(matrix[row]![col]!)) {
+    for (let col: number = 0; col <= width; col++) {
+      const char: string = col !== width ? matrix[row]![col]! : ".";
+
+      if (/^\d$/.test(char)) {
         if (partNumber.length === 0) {
           start = col;
         }
-        partNumber += matrix[row]![col]!;
+        partNumber += char;
       } else if (partNumber.length > 0) {
         if (adjacentSymbol(start, col - 1, row, matrix)) {
-          ans += +partNumber;
+          ans += Number(partNumber);
         }
         partNumber = "";
         start = 0;
