@@ -32,10 +32,56 @@ export function part1(input: string): number {
 }
 
 export function part2(input: string): number {
-  // code here
-  return 0;
+  let ans: number = 0;
+
+  const lines: string[][] = input
+    .trim()
+    .split("\n")
+    .map((line) => line.split(": ")[1]!.split(" | "));
+
+  const linesInfo: Array<{ game: number; points: number }> = [];
+
+  for (let i: number = 0; i < lines.length; i++) {
+    let points: number = 0;
+
+    const winningNumbers: string[] = lines[i]![0]!.split(/\s+/).filter(Boolean);
+    const ourNumbers: string[] = lines[i]![1]!.split(/\s+/).filter(Boolean);
+
+    for (const num of ourNumbers) {
+      if (winningNumbers.includes(num)) points++;
+    }
+
+    linesInfo.push({ game: i, points });
+  }
+
+  const pointsPerLine: number[] = Array(linesInfo.length).fill(NaN);
+
+  function lineCards(index: number): number {
+    let ans: number = linesInfo[index]!.points;
+
+    for (let p: number = 1; p <= linesInfo[index]!.points; p++) {
+      if (!Number.isNaN(pointsPerLine[index + p]))
+        ans += pointsPerLine[index + p]!;
+      else {
+        const points: number = lineCards(index + p);
+        ans += points;
+        pointsPerLine[index + p] = points;
+      }
+    }
+
+    return ans;
+  }
+
+  for (let i: number = 0; i < linesInfo.length; i++) {
+    ans++;
+    if (!Number.isNaN(pointsPerLine[i])) ans += pointsPerLine[i]!;
+    else ans += lineCards(i);
+  }
+
+  return ans;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
 function run(): void {
   const inputContent: string = fs.readFileSync("./days/04/input.txt", "utf-8");
 
