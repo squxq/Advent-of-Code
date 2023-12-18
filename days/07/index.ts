@@ -41,15 +41,22 @@ class PriorityQueue {
   /** @type {QueueType} */
   queue: QueueType;
 
+  /** @type {"part1" | "part2"} */
+  part: "part1" | "part2";
+
   /** @type {Record<HandType, number>} */
   handTypes: Record<HandType, number>;
 
-  /** @type {Record<CardType, number>} */
-  cards: Record<CardType, number>;
+  /** @type {{ part1: Record<CardType, number>; part2: Record<CardType, number> }} */
+  cards: { part1: Record<CardType, number>; part2: Record<CardType, number> };
 
-  /** @param {QueueType} queue */
-  constructor(queue: QueueType) {
+  /**
+   * @param {QueueType} queue
+   * @param {"part1" | "part2"} part
+   */
+  constructor(queue: QueueType = [], part: "part1" | "part2") {
     this.queue = queue;
+    this.part = part;
 
     this.handTypes = {
       five_of_a_kind: 6,
@@ -62,19 +69,36 @@ class PriorityQueue {
     };
 
     this.cards = {
-      A: 12,
-      K: 11,
-      Q: 10,
-      J: 9,
-      T: 8,
-      "9": 7,
-      "8": 6,
-      "7": 5,
-      "6": 4,
-      "5": 3,
-      "4": 2,
-      "3": 1,
-      "2": 0,
+      part1: {
+        A: 12,
+        K: 11,
+        Q: 10,
+        J: 9,
+        T: 8,
+        "9": 7,
+        "8": 6,
+        "7": 5,
+        "6": 4,
+        "5": 3,
+        "4": 2,
+        "3": 1,
+        "2": 0,
+      },
+      part2: {
+        A: 12,
+        K: 11,
+        Q: 10,
+        T: 9,
+        "9": 8,
+        "8": 7,
+        "7": 6,
+        "6": 5,
+        "5": 4,
+        "4": 3,
+        "3": 2,
+        "2": 1,
+        J: 0,
+      },
     };
   }
 
@@ -148,14 +172,24 @@ class PriorityQueue {
    * detectType(hand: string): HandType {(...) return "five_of_a_kind"}
    */
   private detectType(hand: string): HandType {
+    let maxFrequency: number = 0;
+    let mostRepeatedCard: string = "";
+
     const cards: Record<string, number> = {};
 
     for (const card of hand) {
-      if (cards[card] !== undefined) {
-        cards[card]++;
-      } else {
-        cards[card] = 1;
+      const currentFrequency: number = (cards[card] ?? 0) + 1;
+      cards[card] = currentFrequency;
+
+      if (currentFrequency > maxFrequency && card !== "J") {
+        maxFrequency = currentFrequency;
+        mostRepeatedCard = card;
       }
+    }
+
+    if (this.part === "part2" && cards.J !== undefined) {
+      cards[mostRepeatedCard] += cards.J;
+      delete cards.J;
     }
 
     const numKeys: number = Object.keys(cards).length;
@@ -164,9 +198,7 @@ class PriorityQueue {
     switch (true) {
       case numKeys === 1:
         return "five_of_a_kind";
-      case numKeys === 2 &&
-        ((values[0] === 1 && values[1] === 4) ||
-          (values[0] === 4 && values[1] === 1)):
+      case numKeys === 2 && (values[0] === 4 || values[1] === 4):
         return "four_of_a_kind";
       case numKeys === 2:
         return "full_house";
@@ -218,8 +250,8 @@ class PriorityQueue {
     for (let index: number = 0; index < 5; index++) {
       if (hand1[index] !== hand2[index]) {
         return (
-          this.cards[hand1[index] as CardType] >
-          this.cards[hand2[index] as CardType]
+          this.cards[this.part][hand1[index] as CardType] >
+          this.cards[this.part][hand2[index] as CardType]
         );
       }
     }
@@ -235,7 +267,7 @@ export function part1(input: string): number {
     .trim()
     .split("\n")
     .map((line) => line.split(/\s+/));
-  const queue = new PriorityQueue([]);
+  const queue = new PriorityQueue([], "part1");
 
   for (const line of lines) {
     queue.insert(line[0]!, Number(line[1]!));
@@ -249,8 +281,24 @@ export function part1(input: string): number {
 }
 
 export function part2(input: string): number {
-  // code here
-  return 0;
+  let ans: number = 0;
+
+  const lines: string[][] = input
+    .trim()
+    .split("\n")
+    .map((line) => line.split(/\s+/));
+  const queue = new PriorityQueue([], "part2");
+
+  for (const line of lines) {
+    queue.insert(line[0]!, Number(line[1]!));
+  }
+
+  console.log(queue.getQueue);
+  for (let index: number = 0; index < queue.length; index++) {
+    ans += (index + 1) * queue.bid(index);
+  }
+
+  return ans;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
