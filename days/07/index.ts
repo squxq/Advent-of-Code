@@ -1,6 +1,22 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import * as fs from "fs";
 
+/** @typedef {"A" | "K" | "Q" | "J" | "T" | "9" | "8" | "7" | "6" | "5" | "4" | "3" | "2"} */
+type CardType =
+  | "A"
+  | "K"
+  | "Q"
+  | "J"
+  | "T"
+  | "9"
+  | "8"
+  | "7"
+  | "6"
+  | "5"
+  | "4"
+  | "3"
+  | "2";
+
 /** @typedef {"five_of_a_kind" | "four_of_a_kind" | "full_house" | "three_of_a_kind" | "two_pair" | "one_pair" | "high_card"} HandType */
 type HandType =
   | "five_of_a_kind"
@@ -11,35 +27,78 @@ type HandType =
   | "one_pair"
   | "high_card";
 
-/** @typedef { type: HandType; hand: string; bid: number } HeapElement */
-interface HeapElement {
+/** @typedef { type: HandType; hand: string; bid: number } QueueElement */
+interface QueueElement {
   type: HandType;
   hand: string;
   bid: number;
 }
 
-/** @typedef {Array<HeapElement>} HeapType */
-type HeapType = HeapElement[];
+/** @typedef {Array<QueueElement>} QueueType */
+type QueueType = QueueElement[];
 
-class MinHeapPriorityQueue {
-  /** @type {HeapType} */
-  heap: HeapType;
+class PriorityQueue {
+  /** @type {QueueType} */
+  queue: QueueType;
 
-  /** @param {HeapType} heap */
-  constructor(heap: HeapType) {
-    this.heap = heap;
+  /** @type {Record<HandType, number>} */
+  handTypes: Record<HandType, number>;
+
+  /** @type {Record<CardType, number>} */
+  cards: Record<CardType, number>;
+
+  /** @param {QueueType} queue */
+  constructor(queue: QueueType) {
+    this.queue = queue;
+
+    this.handTypes = {
+      five_of_a_kind: 6,
+      four_of_a_kind: 5,
+      full_house: 4,
+      three_of_a_kind: 3,
+      two_pair: 2,
+      one_pair: 1,
+      high_card: 0,
+    };
+
+    this.cards = {
+      A: 12,
+      K: 11,
+      Q: 10,
+      J: 9,
+      T: 8,
+      "9": 7,
+      "8": 6,
+      "7": 5,
+      "6": 4,
+      "5": 3,
+      "4": 2,
+      "3": 1,
+      "2": 0,
+    };
   }
 
   /**
    * @public
    * @returns {number}
-   * produce the length of this.heap
+   * produce the length of this.queue
    *
    * Stub:
    * length(): number {(...) return 0}
    */
-  public length(): number {
-    return this.heap.length;
+  public get length(): number {
+    return this.queue.length;
+  }
+
+  /**
+   * @public
+   * @returns {QueueType}
+   * return this.queue
+   *
+   * Stub: getQueue(): QueueType {(...) return []}
+   */
+  public get getQueue(): QueueType {
+    return this.queue;
   }
 
   /**
@@ -53,7 +112,7 @@ class MinHeapPriorityQueue {
    * bid(index: number): number {(...) return 0}
    */
   public bid(index: number): number {
-    return this.heap[index]!.bid;
+    return this.queue[index]!.bid;
   }
 
   /**
@@ -61,11 +120,21 @@ class MinHeapPriorityQueue {
    * @param {string} hand
    * @param {number} bid
    * @returns {void}
-   * insert given hand, hand, and its bid number, bid, into this.heap
+   * insert given hand, hand, and its bid number, bid, into this.queue
    */
   public insert(hand: string, bid: number): void {
-    this.heap.push({ type: this.detectType(hand), hand, bid });
-    this.heapifyUp();
+    const element: QueueElement = { type: this.detectType(hand), hand, bid };
+    let contain: boolean = false;
+
+    for (let i: number = 0; i < this.length; i++) {
+      if (this.relativeStrength(this.queue[i]!, element)) {
+        this.queue.splice(i, 0, element);
+        contain = true;
+        break;
+      }
+    }
+
+    if (!contain) this.queue.push(element);
   }
 
   /**
@@ -79,64 +148,83 @@ class MinHeapPriorityQueue {
    * detectType(hand: string): HandType {(...) return "five_of_a_kind"}
    */
   private detectType(hand: string): HandType {
-    // code here
-    return "five_of_a_kind";
-  }
+    const cards: Record<string, number> = {};
 
-  /**
-   * @private
-   * @param {number = this.heap.length - 1} startIndex
-   * @returns {void}
-   *
-   * Stub:
-   * heapifyUp(startIndex: number = this.heap.length - 1): void {(...)}
-   */
-  private heapifyUp(startIndex: number = this.heap.length - 1): void {
-    let currentIndex: number = startIndex;
+    for (const card of hand) {
+      if (cards[card] !== undefined) {
+        cards[card]++;
+      } else {
+        cards[card] = 1;
+      }
+    }
 
-    while (currentIndex > 0) {
-      const parentIndex: number = Math.floor((currentIndex - 1) / 2);
-      if (
-        this.relativeStrength(this.heap[currentIndex]!, this.heap[parentIndex]!)
-      ) {
-        this.swap(currentIndex, parentIndex);
-        currentIndex = parentIndex;
-      } else break;
+    const numKeys: number = Object.keys(cards).length;
+    const values: number[] = Object.values(cards);
+
+    switch (true) {
+      case numKeys === 1:
+        return "five_of_a_kind";
+      case numKeys === 2 &&
+        ((values[0] === 1 && values[1] === 4) ||
+          (values[0] === 4 && values[1] === 1)):
+        return "four_of_a_kind";
+      case numKeys === 2:
+        return "full_house";
+      case numKeys === 3 &&
+        (values[0] === 3 || values[1] === 3 || values[2] === 3):
+        return "three_of_a_kind";
+      case numKeys === 3:
+        return "two_pair";
+      case numKeys === 4:
+        return "one_pair";
+      default:
+        return "high_card";
     }
   }
 
   /**
    * @private
-   * @param {HeapElement} element1
-   * @param {HeapElement} element2
+   * @param {QueueElement} element1
+   * @param {QueueElement} element2
    * @returns {boolean}
-   * produce true if given element1's priority is lower than given element2's priority
+   * produce true if given element1's priority is greater than given element2's priority
    *
    * Stub:
-   * relativeStrength(element1: HeapElement, element2: HeapElement): boolean {(...) return false}
+   * relativeStrength(element1: QueueElement, element2: QueueElement): boolean {(...) return false}
    */
   private relativeStrength(
-    element1: HeapElement,
-    element2: HeapElement,
+    element1: QueueElement,
+    element2: QueueElement,
   ): boolean {
-    // code here
-    return false;
+    if (element1.type === element2.type) {
+      return this.strongerCards(element1.hand, element2.hand);
+    }
+
+    return this.handTypes[element1.type] > this.handTypes[element2.type];
   }
 
   /**
    * @private
-   * @param {number} index1
-   * @param {number} index2
-   * @returns {void}
-   * swap given index1's element with given index2's element in this.heap
+   * @param {string} hand1
+   * @param {string} hand2
+   * @returns {boolean}
+   * produce true if hand1 has stronger cards than hand2
+   * ASSUME: hand1.length === hand2.length === 5
    *
    * Stub:
-   * swap(index1: number, index2: number): void {return (...)}
+   * strongerCards(hand1: string, hand2: string): boolean {(...) return false}
    */
-  private swap(index1: number, index2: number): void {
-    const temp: HeapElement = this.heap[index1]!;
-    this.heap[index1] = this.heap[index2]!;
-    this.heap[index2] = temp;
+  private strongerCards(hand1: string, hand2: string): boolean {
+    for (let index: number = 0; index < 5; index++) {
+      if (hand1[index] !== hand2[index]) {
+        return (
+          this.cards[hand1[index] as CardType] >
+          this.cards[hand2[index] as CardType]
+        );
+      }
+    }
+
+    return false;
   }
 }
 
@@ -147,14 +235,14 @@ export function part1(input: string): number {
     .trim()
     .split("\n")
     .map((line) => line.split(/\s+/));
-  const heap = new MinHeapPriorityQueue([]);
+  const queue = new PriorityQueue([]);
 
   for (const line of lines) {
-    heap.insert(line[0]!, Number(line[1]!));
+    queue.insert(line[0]!, Number(line[1]!));
   }
 
-  for (let index: number = 0; index < heap.length(); index++) {
-    ans += (index + 1) * heap.bid(index);
+  for (let index: number = 0; index < queue.length; index++) {
+    ans += (index + 1) * queue.bid(index);
   }
 
   return ans;

@@ -12,4 +12,24 @@ QQQJA 483
 
     expect(result).toBe(6440);
   });
+
+  test("example 2", () => {
+    const result: number = part1(`
+AAAAA 2
+22222 3
+AAAAK 5
+22223 7
+AAAKK 11
+22233 13
+AAAKQ 17
+22234 19
+AAKKQ 23
+22334 29
+AAKQJ 31
+22345 37
+AKQJT 41
+23456 43`);
+
+    expect(result).toBe(1343);
+  });
 });
