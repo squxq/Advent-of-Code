@@ -34,16 +34,44 @@ export function part1(input: string): number {
   return ans;
 }
 
-export function part2(input: string): number {
-  let ans: number = 0;
+/** return the greatest common divisor between given numbers, a & b
+ * @param {number} a
+ * @param {number} b
+ * @returns {number}
+ */
+function gcd(a: number, b: number): number {
+  while (b !== 0) {
+    const temp: number = b;
+    b = a % b;
+    a = temp;
+  }
 
+  return a;
+}
+
+/** return the least commom multiple in the given number array, set
+ * ASSUME: set.length >= 1
+ * @param {number[]} set
+ * @returns  number
+ */
+function lcm(set: number[]): number {
+  let ans: number = set[0]!;
+
+  for (let index: number = 1; index < set.length; index++) {
+    ans = ans * (set[index]! / gcd(ans, set[index] as number));
+  }
+
+  return ans;
+}
+
+export function part2(input: string): number {
   const lines: string[] = input.trim().split("\n");
   lines.splice(1, 1);
 
   const directions: string = lines.shift()!;
 
   const network: Record<string, { L: string; R: string }> = {};
-  const startNodes: string[] = [];
+  const nodes: string[] = [];
 
   for (const line of lines) {
     const [node, nextElements] = line.split(" = ") as [string, string];
@@ -53,26 +81,37 @@ export function part2(input: string): number {
 
     network[node] = { L: left, R: right };
 
-    if (node[node.length - 1] === "A") startNodes.push(node);
+    if (node[node.length - 1] === "A") nodes.push(node);
   }
 
   let direction: number = 0;
+  let iterations: number = 0;
+  const cycles: number[] = [];
+  const startNodesLen: number = nodes.length;
 
-  while (!startNodes.every((node) => node[node.length - 1] === "Z")) {
+  while (cycles.length < startNodesLen) {
+    iterations++;
     if (direction === directions.length) direction = 0;
 
-    for (let index: number = 0; index < startNodes.length; index++) {
-      startNodes[index] =
-        network[startNodes[index] as string]![
-          directions[direction] as "L" | "R"
-        ];
+    // update all of the nodes that have not found the finish node: "ending with 'Z'"
+    // if a node found its finish node, remove it from the nodes we are looking for & add its cycle number
+    for (let index: number = 0; index < nodes.length; index++) {
+      const nextNode: string =
+        network[nodes[index] as string]![directions[direction] as "L" | "R"];
+
+      if (nextNode[nextNode.length - 1] === "Z") {
+        nodes.splice(index, 1);
+        cycles.push(iterations);
+        index--;
+      } else {
+        nodes[index] = nextNode;
+      }
     }
 
     direction++;
-    ans++;
   }
 
-  return ans;
+  return lcm(cycles);
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
