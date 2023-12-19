@@ -132,11 +132,14 @@ export function part1(input: string): number {
 
   const helpers: Helpers = new Helpers();
 
-  helpers.traverseMatrix(matrix, (start, col, row, partNumber) => {
-    if (helpers.adjacentSymbol(start, col - 1, row, matrix)) {
-      ans += Number(partNumber);
-    }
-  });
+  helpers.traverseMatrix(
+    matrix,
+    (start: number, col: number, row: number, partNumber: string) => {
+      if (helpers.adjacentSymbol(start, col - 1, row, matrix)) {
+        ans += Number(partNumber);
+      }
+    },
+  );
 
   return ans;
 }
@@ -151,24 +154,27 @@ export function part2(input: string): number {
 
   const helpers: Helpers = new Helpers();
 
-  helpers.traverseMatrix(matrix, (start, col, row, partNumber) => {
-    const stars: Array<{ col: number; row: number }> = helpers.adjacentStar(
-      start,
-      col - 1,
-      row,
-      matrix,
-    );
+  helpers.traverseMatrix(
+    matrix,
+    (start: number, col: number, row: number, partNumber: string) => {
+      const stars: Array<{ col: number; row: number }> = helpers.adjacentStar(
+        start,
+        col - 1,
+        row,
+        matrix,
+      );
 
-    stars.forEach(({ col, row }: { col: number; row: number }) => {
-      const key: string = `${col},${row}`;
+      stars.forEach(({ col, row }: { col: number; row: number }) => {
+        const key: string = `${col},${row}`;
 
-      if (adjacentStars[key] !== undefined) {
-        adjacentStars[key]!.push(Number(partNumber));
-      } else {
-        adjacentStars[key] = [Number(partNumber)];
-      }
-    });
-  });
+        if (adjacentStars[key] !== undefined) {
+          adjacentStars[key]!.push(Number(partNumber));
+        } else {
+          adjacentStars[key] = [Number(partNumber)];
+        }
+      });
+    },
+  );
 
   return Object.entries(adjacentStars).reduce(
     (acc: number, [, value]: [string, number[]]) => {

@@ -1,6 +1,30 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import * as fs from "fs";
 
+class Helpers {
+  public traverseLines(
+    lines: string[][],
+    fn1: (points: number) => number,
+    fn2: (points: number, i: number) => void,
+  ): void {
+    for (let i: number = 0; i < lines.length; i++) {
+      let points: number = 0;
+
+      const winningNumbers: string[] =
+        lines[i]![0]!.split(/\s+/).filter(Boolean);
+      const ourNumbers: string[] = lines[i]![1]!.split(/\s+/).filter(Boolean);
+
+      for (const num of ourNumbers) {
+        if (winningNumbers.includes(num)) {
+          points = fn1(points);
+        }
+      }
+
+      fn2(points, i);
+    }
+  }
+}
+
 export function part1(input: string): number {
   let ans: number = 0; // sum of points of each individual line
 
@@ -9,24 +33,21 @@ export function part1(input: string): number {
     .split("\n")
     .map((line) => line.split(": ")[1]!.split(" | "));
 
-  for (const line of lines) {
-    let points: number = 0;
+  const helpers: Helpers = new Helpers();
 
-    const winningNumbers: string[] = line[0]!.split(/\s+/).filter(Boolean);
-    const ourNumbers: string[] = line[1]!.split(/\s+/).filter(Boolean);
-
-    for (const num of ourNumbers) {
-      if (winningNumbers.includes(num)) {
-        if (points !== 0) {
-          points += points;
-        } else {
-          points = 1;
-        }
+  helpers.traverseLines(
+    lines,
+    (points: number) => {
+      if (points !== 0) {
+        return 2 * points;
+      } else {
+        return 1;
       }
-    }
-
-    ans += points;
-  }
+    },
+    (points: number) => {
+      ans += points;
+    },
+  );
 
   return ans;
 }
@@ -39,20 +60,18 @@ export function part2(input: string): number {
     .split("\n")
     .map((line) => line.split(": ")[1]!.split(" | "));
 
+  const helpers: Helpers = new Helpers();
   const linesInfo: Array<{ game: number; points: number }> = [];
 
-  for (let i: number = 0; i < lines.length; i++) {
-    let points: number = 0;
-
-    const winningNumbers: string[] = lines[i]![0]!.split(/\s+/).filter(Boolean);
-    const ourNumbers: string[] = lines[i]![1]!.split(/\s+/).filter(Boolean);
-
-    for (const num of ourNumbers) {
-      if (winningNumbers.includes(num)) points++;
-    }
-
-    linesInfo.push({ game: i, points });
-  }
+  helpers.traverseLines(
+    lines,
+    (points: number) => {
+      return points + 1;
+    },
+    (points: number, i: number) => {
+      linesInfo.push({ game: i, points });
+    },
+  );
 
   const pointsPerLine: number[] = Array(linesInfo.length).fill(NaN);
 
