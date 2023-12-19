@@ -29,8 +29,6 @@ export function part1(input: string): number {
 }
 
 export function part2(input: string): number {
-  let ans: number = 1;
-
   const parsedInput: string[][] = input
     .trim()
     .split("\n")
@@ -46,9 +44,7 @@ export function part2(input: string): number {
     (-time - Math.sqrt(time ** 2 - 4 * distance)) / 2,
   );
 
-  ans *= Math.abs(right0 - left0) - 1;
-
-  return ans;
+  return Math.abs(right0 - left0) - 1;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
